@@ -1,416 +1,222 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NUFC — Executive Intelligence Briefing</title>
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;background:#F2F2F2;color:#1a1a1a;min-height:100vh;padding:24px 16px 48px}
-.container{max-width:980px;margin:0 auto}
+"""
+NUFC Executive Intelligence Briefing — Daily Automation
+Runs every weekday at 9am via GitHub Actions.
+Searches credible sources for relevant news and insights for
+the Newcastle United senior leadership group.
+"""
 
-/* ── Header ── */
-.nufc-header{background:#0D0D0D;padding:18px 28px;display:flex;align-items:center;justify-content:space-between;gap:14px;border-radius:10px 10px 0 0}
-.header-left{display:flex;align-items:center;gap:16px}
-.nufc-crest{width:46px;height:46px;background:#fff;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#0D0D0D;letter-spacing:0.05em;flex-shrink:0}
-.nufc-title{color:#fff;font-size:13px;font-weight:700;letter-spacing:0.07em}
-.nufc-sub{color:#41B6E6;font-size:11px;letter-spacing:0.05em;margin-top:2px}
-.header-right{text-align:right}
-.header-date{color:#41B6E6;font-size:12px;font-weight:700;letter-spacing:0.06em}
-.header-label{color:#888;font-size:11px;margin-top:2px}
-.live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#41B6E6;margin-right:5px;animation:pulse 2s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+import os
+import json
+import re
+import datetime
+import anthropic
+import time
 
-.stripe-bar{height:8px;background:repeating-linear-gradient(90deg,#0D0D0D 0,#0D0D0D 16px,#fff 16px,#fff 32px);border-top:2px solid #41B6E6;border-bottom:2px solid #41B6E6}
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
+HTML_PATH = "NUFC - Executive Intelligence Briefing.html"
 
-/* ── Tab bar ── */
-.tab-bar{display:flex;border-bottom:1px solid #E5E5E5;background:#fff;padding:0 24px;overflow-x:auto}
-.tab-btn{padding:12px 16px;font-size:12px;font-weight:700;cursor:pointer;border:none;background:transparent;color:#888;border-bottom:3px solid transparent;margin-bottom:-1px;letter-spacing:0.03em;transition:all 0.15s;white-space:nowrap}
-.tab-btn:hover{color:#0D0D0D}
-.tab-btn.active{color:#0D0D0D;border-bottom-color:#0D0D0D}
-.tab-count{display:inline-flex;align-items:center;justify-content:center;background:#F0F0F0;border-radius:20px;font-size:10px;font-weight:700;padding:1px 7px;margin-left:6px;color:#888}
-.tab-btn.active .tab-count{background:#0D0D0D;color:#fff}
+DATA_BLOCK_START = "// ── DATA BLOCK START"
+DATA_BLOCK_END   = "// ── DATA BLOCK END"
 
-/* ── Body ── */
-.dash-body{background:#fff;padding:20px 24px;display:flex;flex-direction:column;gap:16px;border:1px solid #E5E5E5;border-top:none;border-bottom:none}
+CATEGORIES = [
+    {
+        "id": "legal",
+        "label": "Legal & Financial",
+        "query": "football finance law regulation PSR FFP transfer rules contracts 2026",
+        "instruction": "Focus on financial regulations, legal rulings, accounting changes, transfer financial rules, PSR/FFP updates, tax law changes affecting football clubs, or significant financial deals. Sources: Law in Sport, Swiss Ramble, Deloitte, KPMG, official league/UEFA financial reports, BBC, Reuters."
+    },
+    {
+        "id": "infra",
+        "label": "Infrastructure & Development",
+        "query": "football stadium development training ground construction planning 2026",
+        "instruction": "Focus on stadium projects, training ground developments, planning applications, construction milestones, technology infrastructure investments at football clubs. Include any developments relevant to Newcastle United or St James' Park specifically. Sources: The Athletic, BBC, local news, club official announcements."
+    },
+    {
+        "id": "governing",
+        "label": "Governing Bodies",
+        "query": "Premier League FA UEFA FIFA rules regulations decisions governance 2026",
+        "instruction": "Focus on official rule changes, governance decisions, disciplinary outcomes, policy announcements from the Premier League, FA, UEFA, FIFA or the new Independent Football Regulator. Only credible official sources. Sources: PL official, FA official, UEFA official, FIFA official, BBC Sport."
+    },
+    {
+        "id": "europe",
+        "label": "Big 5 European Leagues",
+        "query": "La Liga Bundesliga Serie A Ligue 1 news transfers finance 2026",
+        "instruction": "Focus on significant news from Spain, Germany, Italy and France — financial developments, major transfers, regulatory decisions, competitive developments that could affect European competition landscape. Sources: Reuters, AFP, The Athletic, Sky Sports, BBC Sport."
+    },
+    {
+        "id": "world",
+        "label": "World Football",
+        "query": "FIFA Club World Cup international football global news 2026",
+        "instruction": "Focus on significant global football developments — FIFA decisions, international tournament updates, global transfer market trends, major club news outside the Big 5, geopolitical impacts on football. Sources: Reuters, BBC Sport, FIFA official, The Athletic."
+    },
+    {
+        "id": "premier",
+        "label": "Premier League",
+        "query": "Premier League news transfers clubs results standings 2026",
+        "instruction": "Focus on Premier League-specific news — competitive updates, club transactions, official announcements, broadcast deals, commercial developments, table standings context. Exclude Newcastle United stories (those go in the Newcastle category). Sources: Premier League official, BBC Sport, Sky Sports, The Athletic."
+    },
+    {
+        "id": "newcastle",
+        "label": "Newcastle United",
+        "query": "Newcastle United NUFC news transfers squad manager 2026",
+        "instruction": "Focus specifically on Newcastle United — transfers in/out, squad news, commercial deals, ownership updates, infrastructure news, manager/coaching updates, academy developments. Sources: Chronicle, BBC Sport, Sky Sports, The Athletic, official club announcements."
+    },
+]
 
-/* ── Summary strip ── */
-.summary-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
-.sum-card{background:#F7F7F7;border-radius:8px;padding:10px 14px;border-left:4px solid #0D0D0D}
-.sum-label{font-size:9px;font-weight:700;letter-spacing:0.07em;color:#999;margin-bottom:3px}
-.sum-val{font-size:20px;font-weight:700;color:#0D0D0D;line-height:1}
-.sum-sub{font-size:10px;color:#999;margin-top:3px}
+def get_day_info():
+    today = datetime.date.today()
+    day_label = today.strftime("%A %d %B %Y")
+    date_label = today.strftime("%-d %B %Y")
+    return day_label, date_label
 
-/* ── Legend ── */
-.legend{display:flex;gap:10px;flex-wrap:wrap;padding:8px 12px;background:#F7F7F7;border-radius:8px;align-items:center}
-.legend-key{font-size:10px;font-weight:700;color:#999;letter-spacing:0.06em;margin-right:2px}
-.legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:#555}
-.legend-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+def search_category(client, category):
+    """Use Claude with web search to find today's relevant news for a category."""
+    print(f"  Searching: {category['label']}...")
 
-/* ── Stat row ── */
-.stat-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
-.stat-card{border-radius:8px;padding:10px 12px;cursor:pointer;border:2px solid transparent;transition:all 0.15s;background:#F7F7F7}
-.stat-card:hover{filter:brightness(0.97)}
-.stat-label{font-size:9px;font-weight:700;letter-spacing:0.07em;margin-bottom:4px}
-.stat-num{font-size:20px;font-weight:700;line-height:1}
-.stat-name{font-size:10px;margin-top:3px;color:#999}
+    prompt = f"""You are a senior intelligence analyst preparing a daily briefing for the Executive team at Newcastle United Football Club. The audience is the CEO, CFO, COO and senior football leadership.
 
-/* ── Search / filters ── */
-.search-row{display:flex;gap:8px;align-items:center}
-.search-wrap{position:relative;flex:1}
-.search-wrap input{width:100%;padding:9px 14px 9px 38px;font-size:13px;border:1px solid #DDD;border-radius:8px;background:#FAFAFA;color:#1a1a1a;outline:none;transition:border-color 0.15s}
-.search-wrap input:focus{border-color:#41B6E6;background:#fff}
-.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:#AAA;pointer-events:none}
-.day-select{padding:9px 12px;font-size:12px;border:1px solid #DDD;border-radius:8px;background:#FAFAFA;color:#1a1a1a;outline:none;cursor:pointer;min-width:160px}
-.filter-tabs{display:flex;gap:6px;flex-wrap:wrap}
-.ftab{padding:5px 13px;font-size:11px;font-weight:700;border:1.5px solid #DDD;border-radius:20px;cursor:pointer;background:transparent;color:#777;letter-spacing:0.04em;transition:all 0.15s;display:flex;align-items:center;gap:5px}
-.ftab:hover{background:#F5F5F5;border-color:#BBB}
-.ftab-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.results-meta{font-size:12px;color:#AAA}
-.results-meta span{font-weight:700}
+Search for the most significant and credible news stories published TODAY or in the last 24 hours in this category: {category['label']}
 
-/* ── Cards ── */
-.cards-list{display:flex;flex-direction:column;gap:8px}
-.r-card{border:1px solid #EBEBEB;border-radius:10px;background:#fff;border-left-width:4px;border-left-style:solid;overflow:hidden}
-.r-card-header{padding:13px 16px;cursor:pointer;display:flex;align-items:flex-start;gap:12px;user-select:none}
-.r-card-main{flex:1;min-width:0}
-.r-card-title{font-size:13px;font-weight:700;color:#0D0D0D;line-height:1.45;margin-bottom:7px}
-.r-card-foot{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
-.badge{font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;letter-spacing:0.04em;white-space:nowrap}
-.cat-pill{font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;white-space:nowrap}
-.day-tag{font-size:10px;padding:2px 8px;border-radius:20px;border:1px solid #E5E5E5;color:#AAA;white-space:nowrap}
-.source-text{font-size:10px;color:#BBB}
-.expand-icon{width:22px;height:22px;border-radius:50%;border:1px solid #E5E5E5;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#AAA;font-size:14px;transition:transform 0.2s;margin-top:1px}
-.expand-icon.open{transform:rotate(180deg)}
-.r-card-body{padding:0 16px 16px;border-top:1px solid #F0F0F0;display:none}
-.r-card-body.open{display:block}
-.r-summary{font-size:13px;color:#555;line-height:1.7;padding-top:13px;margin-bottom:12px}
-.exec-note{border-left:3px solid;padding:11px 14px;margin-bottom:12px}
-.exec-label{font-size:10px;font-weight:700;letter-spacing:0.08em;margin-bottom:5px}
-.exec-text{font-size:13px;line-height:1.65;font-style:italic;color:#555}
-.source-link{font-size:11px;text-decoration:none;display:inline-flex;align-items:center;gap:5px;word-break:break-all}
-.source-link:hover{text-decoration:underline}
+Search focus: {category['query']}
 
-/* ── Archive ── */
-.archive-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.arch-card{background:#F7F7F7;border-radius:8px;padding:12px 14px;border:2px solid transparent;cursor:pointer;transition:all 0.15s}
-.arch-card:hover{border-color:#BBB;background:#F0F0F0}
-.arch-card.open{border-color:#0D0D0D;background:#EBEBEB}
-.arch-day{font-size:11px;font-weight:700;color:#0D0D0D;letter-spacing:0.05em;margin-bottom:2px}
-.arch-date{font-size:11px;color:#AAA;margin-bottom:8px}
-.arch-dots{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px}
-.arch-dot{width:9px;height:9px;border-radius:50%}
-.arch-count{font-size:11px;color:#AAA}
-.arch-chevron{font-size:13px;color:#AAA;transition:transform 0.2s}
-.arch-card.open .arch-chevron{transform:rotate(90deg)}
+{category['instruction']}
 
-/* ── Empty / misc ── */
-.empty-state{text-align:center;padding:40px 20px;color:#AAA}
-.empty-icon{font-size:28px;margin-bottom:10px}
-.empty-title{font-size:14px;font-weight:700;color:#888;margin-bottom:5px}
-.empty-body{font-size:13px;line-height:1.6;max-width:380px;margin:0 auto}
-.day-group-header{display:flex;align-items:center;gap:10px;padding:8px 0 4px}
-.day-group-label{font-size:12px;font-weight:700;color:#0D0D0D;letter-spacing:0.05em;white-space:nowrap}
-.day-group-date{font-size:11px;color:#AAA;white-space:nowrap}
-.day-group-line{flex:1;height:1px;background:#E5E5E5}
+STRICT RULES:
+- Only include genuinely newsworthy, credible stories from reputable sources
+- No gossip, rumour, clickbait or unverified transfer speculation
+- No opinion pieces unless from a recognised expert
+- Minimum 2 items, maximum 4 items
+- If there are no genuinely significant stories today in this category, return an empty array []
 
-/* ── Footer ── */
-.nufc-footer{background:#0D0D0D;border-radius:0 0 10px 10px;padding:11px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-.footer-left{font-size:10px;color:#555;letter-spacing:0.04em}
-.footer-right{font-size:10px;color:#41B6E6;font-weight:700;letter-spacing:0.06em;white-space:nowrap}
+For each item return ONLY a JSON array in this exact format (no other text, no markdown):
 
-@media(max-width:640px){.summary-strip,.stat-row,.archive-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:500px){.nufc-header,.nufc-footer{flex-direction:column;align-items:flex-start;gap:8px}.header-right{text-align:left}}
-</style>
-</head>
-<body>
-<div class="container">
+[
+  {{
+    "category": "{category['id']}",
+    "badge": "News",
+    "title": "Specific, informative headline — not clickbait",
+    "summary": "2-3 sentences summarising what happened, the key facts and numbers. Written for a Premier League CEO who needs to be informed quickly.",
+    "exec_note": "1-2 sentences on why this matters to a Premier League club — the business, legal or strategic implication. Do not address or mention specific roles such as CEO, CFO or COO. Write as a general executive note.",
+    "source": "Publication name, date",
+    "link": "https://actual-url"
+  }}
+]
 
-  <div class="nufc-header">
-    <div class="header-left">
-      <div class="nufc-crest">NUFC</div>
-      <div>
-        <div class="nufc-title">NEWCASTLE UNITED &nbsp;|&nbsp; EXECUTIVE INTELLIGENCE</div>
-        <div class="nufc-sub">Daily Briefing — Senior Leadership</div>
-      </div>
-    </div>
-    <div class="header-right">
-      <div class="header-date" id="hdr-date"><span class="live-dot"></span>LOADING...</div>
-      <div class="header-label">Updated daily at 9am</div>
-    </div>
-  </div>
+Badge options: "News", "Official update", "Regulatory", "Financial", "Transfer", "Legal ruling", "Development", "Analysis", "Interview", "Data"
 
-  <div class="stripe-bar"></div>
+Return ONLY the JSON array. No preamble, no explanation, no markdown code fences."""
 
-  <div class="tab-bar">
-    <button class="tab-btn active" id="tab-today" onclick="switchTab('today')">Today's briefing <span class="tab-count" id="cnt-today">0</span></button>
-    <button class="tab-btn" id="tab-archive" onclick="switchTab('archive')">Archive <span class="tab-count" id="cnt-archive">0</span></button>
-  </div>
+    try:
+        response = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=2500,
+            tools=[{"type": "web_search_20250305", "name": "web_search"}],
+            messages=[{"role": "user", "content": prompt}]
+        )
 
-  <div class="dash-body" id="panel-today">
-    <div class="summary-strip" id="summary-strip"></div>
-    <div class="stat-row" id="stat-row"></div>
-    <div class="legend" id="legend"></div>
-    <div class="search-row">
-      <div class="search-wrap">
-        <svg class="search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="4.5"/><path d="m10.5 10.5 3 3"/></svg>
-        <input type="text" id="search-today" placeholder="Search today's briefing...">
-      </div>
-    </div>
-    <div class="filter-tabs" id="ftabs-today"></div>
-    <div class="results-meta" id="meta-today"></div>
-    <div class="cards-list" id="cards-today"></div>
-  </div>
+        full_text = ""
+        for block in response.content:
+            if hasattr(block, "text"):
+                full_text += block.text
 
-  <div class="dash-body" id="panel-archive" style="display:none">
-    <div class="search-row">
-      <div class="search-wrap">
-        <svg class="search-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6.5" cy="6.5" r="4.5"/><path d="m10.5 10.5 3 3"/></svg>
-        <input type="text" id="search-archive" placeholder="Search all archived briefings...">
-      </div>
-      <select class="day-select" id="day-sel"><option value="all">All dates</option></select>
-    </div>
-    <div class="filter-tabs" id="ftabs-archive"></div>
-    <div class="results-meta" id="meta-archive"></div>
-    <div id="arch-summary"></div>
-    <div class="cards-list" id="cards-archive"></div>
-  </div>
+        clean = full_text.strip()
+        if clean.startswith("```"):
+            clean = re.sub(r"^```[a-z]*\n?", "", clean)
+            clean = re.sub(r"\n?```$", "", clean)
 
-  <div class="nufc-footer">
-    <div class="footer-left">SOURCES: BBC SPORT · SKY SPORTS · THE ATHLETIC · PREMIER LEAGUE · FA · UEFA · FIFA · SWISS RAMBLE · DELOITTE · LAW IN SPORT</div>
-    <div class="footer-right" id="footer-right">DAILY EXECUTIVE BRIEFING</div>
-  </div>
+        items = json.loads(clean)
+        if isinstance(items, list):
+            return items
 
-</div>
-<script>
-// ── Category colour system ────────────────────────────────────────────────
-const COLORS={
-  legal:    {border:'#BA7517',bg:'#FAEEDA',text:'#633806',light:'#FEF8EE'},
-  infra:    {border:'#185FA5',bg:'#E6F1FB',text:'#0C447C',light:'#EFF6FD'},
-  governing:{border:'#534AB7',bg:'#EEEDFE',text:'#3C3489',light:'#F4F3FE'},
-  europe:   {border:'#0F6E56',bg:'#E1F5EE',text:'#085041',light:'#EBF9F4'},
-  world:    {border:'#D85A30',bg:'#FAECE7',text:'#993C1D',light:'#FDF4F1'},
-  premier:  {border:'#7C3DBD',bg:'#F3EDFB',text:'#5A2D8A',light:'#F8F4FD'},
-  newcastle:{border:'#41B6E6',bg:'#E8F7FD',text:'#0C6E9B',light:'#EFF9FE'},
-};
-const CATEGORIES=[
-  {id:'legal',    label:'Legal & financial',              short:'Legal & fin.'},
-  {id:'infra',    label:'Infrastructure & development',   short:'Infrastructure'},
-  {id:'governing',label:'Governing bodies',              short:'Governing'},
-  {id:'europe',   label:'Big 5 European leagues',        short:'Europe'},
-  {id:'world',    label:'World football',                short:'World'},
-  {id:'premier',  label:'Premier League',                short:'Prem League'},
-  {id:'newcastle',label:'Newcastle United',              short:'Newcastle'},
-];
+    except anthropic.RateLimitError:
+        print(f"    Rate limit hit for {category['label']} — waiting 60 seconds...")
+        time.sleep(60)
+        return []
+    except Exception as e:
+        print(f"    Warning: Could not parse response for {category['label']}: {e}")
 
-// ══════════════════════════════════════════════════════════════════════════
-// ── DATA BLOCK START — replaced automatically on each daily update ————
-// ============================================================================
-const TODAY={"day": "Saturday 04 April 2026", "date": "4 April 2026", "items": [{"category": "newcastle", "badge": "Official update", "title": "Kieran Trippier to leave Newcastle United at end of season as contract expires", "summary": "<cite index=\"11-1,11-4\">Newcastle United officially announced that Kieran Trippier will leave the club this summer when his contract expires. The England international joined from Atletico Madrid in January 2022 and has made over 150 appearances.</cite> <cite index=\"11-11,11-12\">Trippier played the full 90 minutes at Wembley as Newcastle beat Liverpool 2-1 in the 2025 Carabao Cup final, helping lift the club's first domestic trophy in 70 years.</cite>", "exec_note": "<cite index=\"11-6,11-7\">Trippier was Eddie Howe's first signing under the PIF-led ownership and helped drive standards that changed the club's trajectory.</cite> His departure removes a key leadership figure and proven Premier League performer, requiring succession planning and potential squad reinvestment at right-back.", "source": "Newcastle United Official, April 4, 2026", "link": "https://www.newcastleunited.com/en/news/kieran-trippier-and-newcastle-united-to-part-ways"}, {"category": "newcastle", "badge": "Financial", "title": "Newcastle United reports record revenues of £335.3m with 44% commercial growth", "summary": "<cite index=\"21-11,21-12,21-13\">Despite not playing European competition during the accounting period, Newcastle's turnover rose by £15m to £335.3m with profit after tax of £34.7m. A 44% rise in commercial revenue was the key driver in overcoming the loss of European earnings.</cite> <cite index=\"21-14,21-15\">Growth was supported by investment in an in-house retail operation and opening of the unique 'St. James' STACK' fan zone next to St. James' Park.</cite>", "exec_note": "<cite index=\"21-16\">The club also undertook reorganisation of its property holdings and group structure to support future investment in infrastructure.</cite> This financial performance demonstrates successful commercial diversification away from European competition dependency, providing enhanced investment capacity for player acquisitions and infrastructure development.", "source": "Newcastle United Official, March 31, 2026", "link": "https://www.newcastleunited.com/en/news/newcastle-united-announces-record-income"}]};
-const ARCHIVE=[{"day": "Friday 4 April 2026", "date": "4 April 2026", "items": [{"category": "newcastle", "badge": "Club news", "title": "Newcastle United confirm summer transfer strategy focused on homegrown talent and UEFA compliance", "summary": "Newcastle United's leadership have outlined a summer transfer approach prioritising players who qualify as homegrown under UEFA's revised squad regulations, as the club prepares for continued European competition. The strategy reflects both regulatory requirements and a long-term commitment to developing the club's own academy pipeline into the first team.", "exec_note": "Directly relevant to both the football leadership and CFO. UEFA homegrown rules carry significant squad registration implications and financial planning requirements for the summer window.", "source": "The Athletic, April 2026", "link": "https://www.theathletic.com"}, {"category": "premier", "badge": "Official update", "title": "Premier League confirms new financial sustainability rules come into effect from 2026-27 season", "summary": "The Premier League has confirmed its updated Profit and Sustainability Rules (PSR) framework will be enforced from the 2026-27 season, replacing the existing model with a rolling three-year assessment period and tighter squad cost thresholds. Clubs will be required to submit compliance projections alongside their annual accounts.", "exec_note": "Critical for the CFO and COO to review immediately. The updated PSR framework changes the financial planning horizon and may require adjustments to existing multi-year contracts and commercial projections.", "source": "Premier League Official, April 2026", "link": "https://www.premierleague.com"}, {"category": "legal", "badge": "Regulatory", "title": "Football governance reform bill receives Royal Assent — Independent Regulator formally established", "summary": "The UK Football Governance Bill has received Royal Assent, formally establishing the Independent Football Regulator (IFR). The regulator will oversee financial sustainability, owners and directors tests, and fan engagement requirements across the top five divisions of English football. Implementation timelines are expected to be announced within 90 days.", "exec_note": "A landmark moment for English football governance. The CEO and legal team should begin preparing for the new owners and directors test requirements and fan engagement compliance obligations.", "source": "UK Government / BBC Sport, April 2026", "link": "https://www.bbc.co.uk/sport/football"}, {"category": "governing", "badge": "UEFA update", "title": "UEFA publishes revised Financial Sustainability Regulations ahead of 2026-27 implementation", "summary": "UEFA has published the full technical detail of its revised Financial Sustainability Regulations, which replace the previous Financial Fair Play framework. The new rules introduce a football earnings ratio, a squad cost rule capping wages and transfers at 70% of revenue, and enhanced monitoring of related-party transactions.", "exec_note": "The 70% squad cost cap is the most operationally significant element for clubs in European competition. The CFO should model current squad costs against the new ratio immediately.", "source": "UEFA Official, April 2026", "link": "https://www.uefa.com"}, {"category": "infra", "badge": "Development", "title": "Premier League clubs collectively invest record £2.1bn in stadium and training ground infrastructure", "summary": "New data from Deloitte shows Premier League clubs have collectively committed £2.1 billion to stadium and training ground development projects in the current cycle — a record figure. Projects range from full stadium rebuilds to technology-led training facility upgrades, with the north of England seeing disproportionately high investment levels.", "exec_note": "Useful context for NUFC's own infrastructure planning conversations. The Deloitte data provides benchmarking for board discussions around the St James' Park development project.", "source": "Deloitte Sports Business Group, April 2026", "link": "https://www.deloitte.com/uk/en/pages/sports-business-group"}, {"category": "europe", "badge": "La Liga", "title": "Real Madrid and Barcelona reach agreement with La Liga over financial fair play compliance timelines", "summary": "Real Madrid and Barcelona have reached a formal agreement with La Liga over extended compliance timelines under the Spanish league's financial control framework, avoiding potential registration restrictions for the summer window. Both clubs had been under enhanced monitoring following pandemic-era losses.", "exec_note": "Relevant context for understanding how European clubs are navigating financial regulations — a benchmark for how the PL's own PSR negotiations may evolve with clubs in similar positions.", "source": "Reuters / Sky Sports, April 2026", "link": "https://www.skysports.com"}, {"category": "world", "badge": "FIFA update", "title": "FIFA confirms expanded Club World Cup format and prize fund structure for 2025 tournament", "summary": "FIFA has confirmed the full prize fund structure for the expanded 32-team Club World Cup, with the total pool set at $1 billion USD. Participating clubs will receive a minimum of $50 million with the winner taking $125 million. Broadcasting rights have been sold across 190 territories.", "exec_note": "The prize fund scale makes Club World Cup participation a meaningful commercial and sporting objective. Relevant to long-term squad investment planning and UEFA coefficient strategy.", "source": "FIFA Official / The Athletic, April 2026", "link": "https://www.fifa.com"}]}];
-// ============================================================================
-// ── DATA BLOCK END ────────────────────────────────────────────────────────
-// ══════════════════════════════════════════════════════════════════════════
+    return []
 
-let activeTab='today',activeCat='all',searchToday='',catArch='all',searchArch='',dayFilter='all',openDay=null;
-const openCards=new Set();
+def load_current_html():
+    with open(HTML_PATH, "r", encoding="utf-8") as f:
+        return f.read()
 
-function co(id){return COLORS[id]||{border:'#888',bg:'#f5f5f5',text:'#555',light:'#fafafa'}}
-function cl(id){return CATEGORIES.find(c=>c.id===id)?.label||id}
+def extract_current_data(html):
+    today_match = re.search(r"const TODAY=(\{.*?\});", html, re.DOTALL)
+    arch_match  = re.search(r"const ARCHIVE=(\[.*?\]);",  html, re.DOTALL)
+    today = json.loads(today_match.group(1)) if today_match else None
+    archive = json.loads(arch_match.group(1)) if arch_match else []
+    return today, archive
 
-function switchTab(t){
-  activeTab=t;
-  document.getElementById('panel-today').style.display=t==='today'?'flex':'none';
-  document.getElementById('panel-archive').style.display=t==='archive'?'flex':'none';
-  document.getElementById('tab-today').className='tab-btn'+(t==='today'?' active':'');
-  document.getElementById('tab-archive').className='tab-btn'+(t==='archive'?' active':'');
-  if(t==='archive') renderArchive();
-}
+def build_new_html(html, new_today, new_archive):
+    start = html.index(DATA_BLOCK_START)
+    end   = html.index(DATA_BLOCK_END) + len(DATA_BLOCK_END)
 
-function buildSummaryStrip(){
-  const el=document.getElementById('summary-strip');
-  const total=TODAY.items.length;
-  const nufc=TODAY.items.filter(x=>x.category==='newcastle').length;
-  const prem=TODAY.items.filter(x=>x.category==='premier').length;
-  const legal=TODAY.items.filter(x=>x.category==='legal').length;
-  const data=[
-    {label:'TOTAL ITEMS',val:total,sub:'across all categories',col:'#0D0D0D'},
-    {label:'NEWCASTLE',val:nufc,sub:'club-specific items',col:COLORS.newcastle.border},
-    {label:'PREMIER LEAGUE',val:prem,sub:'league updates',col:COLORS.premier.border},
-    {label:'LEGAL & FINANCIAL',val:legal,sub:'regulatory items',col:COLORS.legal.border},
-  ];
-  el.innerHTML=data.map(d=>`
-    <div class="sum-card" style="border-left-color:${d.col}">
-      <div class="sum-label" style="color:${d.col}">${d.label}</div>
-      <div class="sum-val" style="color:${d.col}">${d.val}</div>
-      <div class="sum-sub">${d.sub}</div>
-    </div>`).join('');
-}
+    today_json   = json.dumps(new_today,   ensure_ascii=False)
+    archive_json = json.dumps(new_archive, ensure_ascii=False)
 
-function buildStats(){
-  const row=document.getElementById('stat-row');row.innerHTML='';
-  const isAll=activeCat==='all';
-  const a=document.createElement('div');a.className='stat-card';
-  a.style.cssText=`border-color:${isAll?'#0D0D0D':'transparent'};background:${isAll?'#EBEBEB':'#F7F7F7'}`;
-  a.innerHTML=`<div class="stat-label" style="color:#888">ALL</div><div class="stat-num" style="color:#0D0D0D">${TODAY.items.length}</div><div class="stat-name">items today</div>`;
-  a.onclick=()=>{activeCat='all';renderToday()};row.appendChild(a);
-  CATEGORIES.forEach(cat=>{
-    const col=co(cat.id),n=TODAY.items.filter(x=>x.category===cat.id).length,act=activeCat===cat.id;
-    const d=document.createElement('div');d.className='stat-card';
-    d.style.cssText=`border-color:${act?col.border:'transparent'};background:${act?col.bg:'#F7F7F7'}`;
-    d.innerHTML=`<div class="stat-label" style="color:${col.text}">${cat.short.toUpperCase()}</div><div class="stat-num" style="color:${col.border}">${n}</div><div class="stat-name">${n===1?'item':'items'}</div>`;
-    d.onclick=()=>{activeCat=cat.id;renderToday()};row.appendChild(d);
-  });
-}
+    new_block = (
+        f"{DATA_BLOCK_START} — replaced automatically on each daily update ————\n"
+        f"// {'=' * 76}\n"
+        f"const TODAY={today_json};\n"
+        f"const ARCHIVE={archive_json};\n"
+        f"// {'=' * 76}\n"
+        f"{DATA_BLOCK_END}"
+    )
 
-function buildLegend(){
-  const el=document.getElementById('legend');el.innerHTML='<span class="legend-key">KEY</span>';
-  CATEGORIES.forEach(c=>{el.innerHTML+=`<div class="legend-item"><div class="legend-dot" style="background:${co(c.id).border}"></div>${c.label}</div>`});
-}
+    return html[:start] + new_block + html[end:]
 
-function buildFilters(cid,cur,onSel){
-  const wrap=document.getElementById(cid);if(!wrap)return;wrap.innerHTML='';
-  const isAll=cur==='all';
-  const ab=document.createElement('button');ab.className='ftab'+(isAll?' active':'');
-  ab.style.cssText=isAll?'background:#0D0D0D;color:#fff;border-color:#0D0D0D':'';
-  ab.innerHTML=`<span class="ftab-dot" style="background:${isAll?'#41B6E6':'#CCC'}"></span>All categories`;
-  ab.onclick=()=>onSel('all');wrap.appendChild(ab);
-  CATEGORIES.forEach(cat=>{
-    const col=co(cat.id),act=cur===cat.id;
-    const b=document.createElement('button');b.className='ftab';
-    b.style.cssText=act?`background:${col.bg};color:${col.text};border-color:${col.border}`:'';
-    b.innerHTML=`<span class="ftab-dot" style="background:${act?col.border:col.border+'77'}"></span>${cat.label}`;
-    b.onclick=()=>onSel(cat.id);wrap.appendChild(b);
-  });
-}
+def main():
+    print("=" * 60)
+    print("NUFC Executive Intelligence Briefing — Daily Automation")
+    print("=" * 60)
 
-function filteredToday(){
-  return TODAY.items.filter(item=>{
-    const catOk=activeCat==='all'||item.category===activeCat;
-    const q=searchToday.toLowerCase();
-    return catOk&&(!q||[item.title,item.summary,item.exec_note,item.source].some(t=>t.toLowerCase().includes(q)));
-  });
-}
+    day_label, date_label = get_day_info()
+    print(f"\nGenerating briefing for: {day_label}\n")
 
-function cardHTML(item,id,showDay){
-  const col=co(item.category);const isOpen=openCards.has(id);
-  const dt=showDay&&item.day?`<span class="day-tag">${item.day}</span>`:'';
-  return `<div class="r-card" style="border-left-color:${col.border}">
-    <div class="r-card-header" onclick="toggleCard('${id}')">
-      <div class="r-card-main">
-        <div class="r-card-title">${item.title}</div>
-        <div class="r-card-foot">
-          <span class="badge" style="background:${col.bg};color:${col.text}">${item.badge}</span>
-          <span class="cat-pill" style="background:${col.bg};color:${col.text}">${cl(item.category)}</span>
-          ${dt}<span class="source-text">${item.source}</span>
-        </div>
-      </div>
-      <div class="expand-icon ${isOpen?'open':''}" id="icon-${id}">&#8964;</div>
-    </div>
-    <div class="r-card-body ${isOpen?'open':''}" id="body-${id}">
-      <p class="r-summary">${item.summary}</p>
-      <div class="exec-note" style="background:${col.light};border-left-color:${col.border}">
-        <div class="exec-label" style="color:${col.text}">EXECUTIVE NOTE</div>
-        <div class="exec-text">${item.exec_note}</div>
-      </div>
-      <a class="source-link" style="color:${col.border}" href="${item.link}" target="_blank" rel="noopener noreferrer">
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 2H2a1 1 0 00-1 1v7a1 1 0 001 1h7a1 1 0 001-1V8M8 1h3m0 0v3m0-3L5 7"/></svg>${item.link}
-      </a>
-    </div>
-  </div>`;
-}
+    client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 
-function toggleCard(id){
-  const b=document.getElementById('body-'+id),ic=document.getElementById('icon-'+id);
-  if(!b||!ic)return;
-  if(openCards.has(id)){openCards.delete(id);b.classList.remove('open');ic.classList.remove('open')}
-  else{openCards.add(id);b.classList.add('open');ic.classList.add('open')}
-}
+    all_items = []
+    for i, category in enumerate(CATEGORIES):
+        if i > 0:
+            print(f"    Pausing 30 seconds...")
+            time.sleep(30)
 
-function renderToday(){
-  buildSummaryStrip();buildStats();buildLegend();
-  buildFilters('ftabs-today',activeCat,s=>{activeCat=s;renderToday()});
-  const items=filteredToday();
-  const acol=activeCat==='all'?'#41B6E6':co(activeCat).border;
-  document.getElementById('meta-today').innerHTML=`Showing <span style="color:${acol}">${items.length}</span> of ${TODAY.items.length} items`;
-  const list=document.getElementById('cards-today');
-  list.innerHTML=items.length?items.map((item,i)=>cardHTML(item,'td'+i,false)).join(''):`<div class="empty-state"><div class="empty-icon">&#x1F50D;</div><div class="empty-title">No items match</div><div class="empty-body">Try a different keyword or clear the filter.</div></div>`;
-  document.getElementById('cnt-today').textContent=TODAY.items.length;
-  document.getElementById('hdr-date').innerHTML=`<span class="live-dot"></span>${TODAY.day.toUpperCase()}`;
-  document.getElementById('footer-right').textContent=`${TODAY.items.length} ITEMS · ${TODAY.date.toUpperCase()}`;
-}
+        items = search_category(client, category)
+        print(f"    Found {len(items)} items for {category['label']}")
+        all_items.extend(items)
 
-function allArchiveItems(){return ARCHIVE.flatMap(d=>d.items.map(item=>({...item,day:d.day,dayDate:d.date})))}
+    if not all_items:
+        print("\nNo items found today. Aborting update.")
+        return
 
-function filteredArchive(){
-  return allArchiveItems().filter(item=>{
-    const catOk=catArch==='all'||item.category===catArch;
-    const dayOk=dayFilter==='all'||item.day===dayFilter;
-    const q=searchArch.toLowerCase();
-    return catOk&&dayOk&&(!q||[item.title,item.summary,item.exec_note,item.source].some(t=>t.toLowerCase().includes(q)));
-  });
-}
+    print(f"\nTotal items found: {len(all_items)}")
 
-function toggleDay(day){
-  openDay=openDay===day?null:day;
-  renderArchiveSummary();
-  if(openDay) setTimeout(()=>{const el=document.getElementById('day-expanded');if(el)el.scrollIntoView({behavior:'smooth',block:'nearest'})},60);
-}
+    html = load_current_html()
+    current_today, current_archive = extract_current_data(html)
 
-function renderArchiveSummary(){
-  const wrap=document.getElementById('arch-summary');
-  if(!ARCHIVE.length){wrap.innerHTML=`<div class="empty-state"><div class="empty-icon">&#128193;</div><div class="empty-title">No archived briefings yet</div><div class="empty-body">Yesterday's briefing will appear here each morning when today's is published.</div></div>`;return}
-  const grid=ARCHIVE.map(d=>{
-    const dots=CATEGORIES.map(cat=>{const n=d.items.filter(x=>x.category===cat.id).length;return n>0?`<div class="arch-dot" title="${cat.label}: ${n}" style="background:${COLORS[cat.id].border}"></div>`:''}).join('');
-    const isOpen=openDay===d.day;
-    return `<div class="arch-card ${isOpen?'open':''}" onclick="toggleDay('${d.day}')">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div><div class="arch-day">${d.day}</div><div class="arch-date">${d.date}</div></div>
-        <span class="arch-chevron">&#8250;</span>
-      </div>
-      <div class="arch-dots" style="margin-top:8px">${dots}</div>
-      <div class="arch-count">${d.items.length} ${d.items.length===1?'item':'items'}</div>
-    </div>`;
-  }).join('');
-  const expandedHTML=openDay?`
-    <div id="day-expanded" style="margin-top:12px">
-      <div style="display:flex;align-items:center;gap:10px;padding:0 0 10px">
-        <span style="font-size:12px;font-weight:700;color:#0D0D0D;letter-spacing:0.05em">${openDay.toUpperCase()}</span>
-        <span style="font-size:11px;color:#AAA">${ARCHIVE.find(d=>d.day===openDay)?.date||''}</span>
-        <div style="flex:1;height:1px;background:#E5E5E5"></div>
-        <span style="font-size:11px;color:#AAA">${ARCHIVE.find(d=>d.day===openDay)?.items.length||0} items</span>
-      </div>
-      <div class="cards-list">${(ARCHIVE.find(d=>d.day===openDay)?.items||[]).map((item,i)=>cardHTML({...item,day:openDay},'ex'+openDay.replace(/\s/g,'')+i,false)).join('')}</div>
-    </div>`:'';
-  wrap.innerHTML=`<div class="archive-grid">${grid}</div>${expandedHTML}`;
-}
+    new_archive = current_archive
+    # Keep last 14 days in archive
+    if current_today and current_today.get("items"):
+        new_archive = [current_today] + current_archive
+        new_archive = new_archive[:14]
+        print(f"Moved {current_today['day']} to archive ({len(current_today['items'])} items)")
 
-function renderArchive(){
-  document.getElementById('cnt-archive').textContent=allArchiveItems().length;
-  buildFilters('ftabs-archive',catArch,s=>{catArch=s;openDay=null;renderArchiveSummary();renderArchiveList()});
-  const sel=document.getElementById('day-sel');sel.innerHTML='<option value="all">All dates</option>';
-  ARCHIVE.forEach(d=>{sel.innerHTML+=`<option value="${d.day}">${d.day} \u2014 ${d.date}</option>`});
-  sel.value=dayFilter;
-  renderArchiveSummary();renderArchiveList();
-}
+    new_today = {
+        "day":   day_label,
+        "date":  date_label,
+        "items": all_items
+    }
 
-function renderArchiveList(){
-  const isDefault=dayFilter==='all'&&!searchArch&&catArch==='all';
-  const list=document.getElementById('cards-archive');
-  if(isDefault){document.getElementById('meta-archive').innerHTML=`<span style="color:#AAA">Click a day above to view its briefing</span>`;list.innerHTML='';return}
-  const items=filteredArchive();
-  const acol=catArch==='all'?'#41B6E6':co(catArch).border;
-  document.getElementById('meta-archive').innerHTML=`Showing <span style="color:${acol}">${items.length}</span> archived items`;
-  if(!items.length){list.innerHTML=`<div class="empty-state"><div class="empty-icon">&#x1F50D;</div><div class="empty-title">No items match</div></div>`;return}
-  list.innerHTML=items.map((item,i)=>cardHTML(item,'arf'+i,true)).join('');
-}
+    updated_html = build_new_html(html, new_today, new_archive)
 
-document.getElementById('search-today').addEventListener('input',function(){searchToday=this.value;renderToday()});
-document.getElementById('search-archive').addEventListener('input',function(){searchArch=this.value;renderArchiveList()});
-document.getElementById('day-sel').addEventListener('change',function(){dayFilter=this.value;renderArchiveList()});
+    with open(HTML_PATH, "w", encoding="utf-8") as f:
+        f.write(updated_html)
 
-renderToday();
-document.getElementById('cnt-archive').textContent=allArchiveItems().length;
-</script>
-</body>
-</html>
+    print(f"\n✓ Briefing updated: {day_label}")
+    print(f"  Items today   : {len(all_items)}")
+    print(f"  Days in archive: {len(new_archive)}")
+    print("\nDone. GitHub Actions will commit and publish automatically.")
+
+if __name__ == "__main__":
+    main()
