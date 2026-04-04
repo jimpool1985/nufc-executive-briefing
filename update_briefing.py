@@ -70,10 +70,9 @@ def get_day_info():
     return day_label, date_label
 
 def search_category(client, category):
-    """Use Claude with web search to find today's relevant news for a category."""
     print(f"  Searching: {category['label']}...")
 
-    prompt = f"""You are a senior intelligence analyst preparing a daily briefing for the Executive team at Newcastle United Football Club. The audience is the CEO, CFO, COO and senior football leadership.
+    prompt = f"""You are a senior intelligence analyst preparing a daily briefing for the Executive team at Newcastle United Football Club.
 
 Search for the most significant and credible news stories published TODAY or in the last 24 hours in this category: {category['label']}
 
@@ -95,8 +94,8 @@ For each item return ONLY a JSON array in this exact format (no other text, no m
     "category": "{category['id']}",
     "badge": "News",
     "title": "Specific, informative headline — not clickbait",
-    "summary": "2-3 sentences summarising what happened, the key facts and numbers. Written for a Premier League CEO who needs to be informed quickly.",
-    "exec_note": "1-2 sentences on why this matters specifically to a Premier League club executive — the business, legal or strategic implication.",
+    "summary": "2-3 sentences summarising what happened, the key facts and numbers. Written for a senior football club executive who needs to be informed quickly.",
+    "exec_note": "1-2 sentences on why this matters to a Premier League club — the business, legal or strategic implication. Do not address or mention specific roles. Write as a general executive note.",
     "source": "Publication name, date",
     "link": "https://actual-url"
   }}
@@ -196,7 +195,6 @@ def main():
     current_today, current_archive = extract_current_data(html)
 
     new_archive = current_archive
-    # Keep last 14 days in archive
     if current_today and current_today.get("items"):
         new_archive = [current_today] + current_archive
         new_archive = new_archive[:14]
