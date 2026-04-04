@@ -1,0 +1,40 @@
+name: Daily Executive Briefing Update
+
+on:
+  schedule:
+    # Runs every day at 9:00 AM UK time (8:00 AM UTC)
+    - cron: '0 8 * * *'
+  # Allows manual trigger from GitHub Actions tab
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-briefing:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install anthropic
+
+      - name: Run daily briefing update
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python scripts/update_briefing.py
+
+      - name: Commit and publish updated briefing
+        run: |
+          git config --global user.name  "NUFC Briefing Bot"
+          git config --global user.email "briefing-bot@nufc.co.uk"
+          git add "NUFC - Executive Intelligence Briefing.html"
+          git diff --staged --quiet || git commit -m "Daily briefing — $(date +'%A %d %B %Y')"
+          git push
