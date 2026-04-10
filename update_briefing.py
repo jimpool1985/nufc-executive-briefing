@@ -21,73 +21,74 @@ CATEGORIES = [
         "id": "legal",
         "label": "Legal & Financial",
         "queries": [
-            "football PSR profit sustainability rules financial 2026",
-            "Premier League FFP financial fair play ruling April 2026",
-            "football club finance law regulation transfer April 2026",
+            "football PSR financial rules April 2026",
+            "Premier League club finance law April 10 2026",
         ],
-        "instruction": "Find news published in the last 48 hours only. Topics: PSR/FFP updates, financial regulations, legal rulings, transfer financial rules, significant sponsorship or broadcast deals, club accounts, arbitration outcomes. Sources: Law in Sport, Swiss Ramble, Deloitte, The Athletic, BBC Sport, Reuters, The Times, The Guardian."
+        "instruction": "Topics: PSR/FFP updates, financial regulations, legal rulings, sponsorship deals, broadcast revenue, club accounts. Sources: Law in Sport, Swiss Ramble, The Athletic, BBC Sport, Reuters, The Times."
     },
     {
         "id": "infra",
         "label": "Infrastructure & Development",
         "queries": [
-            "football stadium development planning construction April 2026",
-            "Premier League training ground facility April 2026",
-            "Newcastle United St James Park stadium April 2026",
+            "football stadium training ground development April 2026",
+            "Newcastle United St James Park infrastructure April 2026",
         ],
-        "instruction": "Find news published in the last 48 hours only. Topics: stadium renovation or rebuild projects, training ground developments, planning applications, construction milestones, technology investments, naming rights deals. Pay particular attention to Newcastle United infrastructure news. Sources: BBC Sport, The Athletic, Sky Sports, local newspapers, club official announcements."
+        "instruction": "Topics: stadium projects, training ground developments, planning applications, construction milestones, naming rights. Pay particular attention to Newcastle United infrastructure news. Sources: BBC Sport, The Athletic, Sky Sports, local newspapers, club official announcements."
     },
     {
         "id": "governing",
         "label": "Governing Bodies",
         "queries": [
-            "Premier League FA UEFA FIFA rule decision announcement April 2026",
-            "Independent Football Regulator IFR update April 2026",
-            "football governing body disciplinary April 2026",
+            "Premier League FA UEFA FIFA decision rule April 10 2026",
+            "football governing body announcement April 2026",
         ],
-        "instruction": "Find news published in the last 48 hours only. Topics: Premier League rule changes or votes, FA disciplinary decisions, UEFA regulation updates, FIFA policy announcements, IFR updates, VAR policy, squad registration changes, transfer window rules, agent regulations. Sources: Premier League official, FA official, UEFA official, FIFA official, BBC Sport, Sky Sports, The Athletic."
+        "instruction": "Topics: Premier League rule changes, FA disciplinary decisions, UEFA/FIFA policy announcements, IFR updates, VAR policy, transfer window rules. Sources: PL official, FA official, UEFA official, FIFA official, BBC Sport, Sky Sports."
     },
     {
         "id": "europe",
         "label": "Big 5 European Leagues",
         "queries": [
             "La Liga Bundesliga Serie A Ligue 1 news April 10 2026",
-            "Real Madrid Barcelona Bayern Munich PSG transfer news this week",
-            "European football major news today April 2026",
+            "European football transfer result news today April 2026",
         ],
-        "instruction": "Find news published in the last 48 hours only. Topics: major transfers, club financial developments, managerial changes, significant match results, financial regulation compliance, European competition results. Sources: Reuters, AFP, The Athletic, Sky Sports, BBC Sport."
+        "instruction": "Topics: major transfers, club financial news, managerial changes, significant results, European competition. Sources: Reuters, The Athletic, Sky Sports, BBC Sport."
     },
     {
         "id": "world",
         "label": "World Football",
         "queries": [
-            "FIFA Club World Cup news April 2026",
-            "Saudi Pro League MLS international football April 2026",
-            "World Cup 2026 news update April 2026",
+            "FIFA Club World Cup Saudi Pro League news April 2026",
+            "international football World Cup 2026 news April 10 2026",
         ],
-        "instruction": "Find news published in the last 48 hours only. Topics: FIFA decisions, Saudi Pro League, MLS, World Cup 2026, international tournaments, global transfer trends. Sources: Reuters, BBC Sport, FIFA official, The Athletic, ESPN."
+        "instruction": "Topics: FIFA Club World Cup, Saudi Pro League, MLS, World Cup 2026, global football news. Sources: Reuters, BBC Sport, FIFA official, The Athletic, ESPN."
     },
     {
         "id": "premier",
         "label": "Premier League",
         "queries": [
-            "Premier League results standings April 10 2026",
-            "Premier League transfer news confirmed April 2026",
-            "Premier League club news manager injury April 2026",
+            "Premier League results standings news April 10 2026",
+            "Premier League transfer injury manager news April 2026",
         ],
-        "instruction": "Find news published in the last 48 hours only. Exclude Newcastle United stories. Topics: match results and table standings, confirmed transfers, managerial news, injuries, club financial announcements, broadcast deals. Sources: BBC Sport, Sky Sports, The Athletic, Premier League official, The Guardian, The Times."
+        "instruction": "Topics: match results, table standings, confirmed transfers, managerial news, injuries, club announcements. Exclude Newcastle United. Sources: BBC Sport, Sky Sports, The Athletic, The Guardian."
     },
     {
         "id": "newcastle",
         "label": "Newcastle United",
         "queries": [
-            "Newcastle United news April 10 2026",
-            "Newcastle United transfer squad news April 2026",
-            "NUFC Eddie Howe team news April 2026",
+            "Newcastle United NUFC news April 10 2026",
+            "Newcastle United transfer team news April 2026",
         ],
-        "instruction": "Find news published in the last 48 hours only. Topics: match results, transfers, Eddie Howe press conference, player injuries, PIF ownership, commercial deals, St James' Park, academy, women's team. Sources: Chronicle Live, BBC Sport Newcastle, Sky Sports, The Athletic, Newcastle United official."
+        "instruction": "Topics: match results, transfers, Eddie Howe press conference, player injuries, PIF ownership, commercial deals, St James' Park. Sources: Chronicle Live, BBC Sport, Sky Sports, The Athletic, NUFC official."
     },
 ]
+
+# Month name to number mapping for date parsing
+MONTHS = {
+    "january":1,"february":2,"march":3,"april":4,"may":5,"june":6,
+    "july":7,"august":8,"september":9,"october":10,"november":11,"december":12,
+    "jan":1,"feb":2,"mar":3,"apr":4,"jun":6,"jul":7,"aug":8,
+    "sep":9,"oct":10,"nov":11,"dec":12
+}
 
 def get_day_info():
     today = datetime.date.today()
@@ -96,42 +97,117 @@ def get_day_info():
     date_label = today.strftime("%-d %B %Y")
     today_str = today.strftime("%d %B %Y")
     yesterday_str = yesterday.strftime("%d %B %Y")
-    return day_label, date_label, today_str, yesterday_str
+    return day_label, date_label, today, yesterday, today_str, yesterday_str
+
+def is_recent(source_str, today, yesterday):
+    """
+    Parse the source field and check if the article date is today or yesterday.
+    Returns True if recent, False if old, None if date cannot be determined.
+    """
+    s = source_str.lower()
+
+    # Reject obvious old year markers
+    for old_year in ["2024", "2023", "2022", "2021", "2020"]:
+        if old_year in s:
+            return False
+
+    # Check for relative terms
+    if any(x in s for x in ["today", "just now", "hours ago", "hour ago", "minutes ago"]):
+        return True
+    if "1 day ago" in s or "yesterday" in s:
+        return True
+    if re.search(r"\b[2-9] days? ago\b", s):
+        return False
+    if re.search(r"\b[1-9]\d+ days? ago\b", s):
+        return False
+    if "week ago" in s or "weeks ago" in s or "month ago" in s or "months ago" in s:
+        return False
+
+    # Try to extract a date with day + month (+ optional year)
+    # Patterns: "April 10", "10 April", "10 Apr", "Apr 10"
+    pattern = re.search(
+        r"(\d{1,2})\s+(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|oct|nov|dec)"
+        r"(?:\s+(\d{4}))?",
+        s
+    )
+    if not pattern:
+        pattern = re.search(
+            r"(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|oct|nov|dec)"
+            r"\s+(\d{1,2})(?:\s+(\d{4}))?",
+            s
+        )
+        if pattern:
+            month_str = pattern.group(1)
+            day = int(pattern.group(2))
+            year = int(pattern.group(3)) if pattern.group(3) else today.year
+        else:
+            # Can't determine date — allow through but flag
+            return None
+    else:
+        day = int(pattern.group(1))
+        month_str = pattern.group(2)
+        year = int(pattern.group(3)) if pattern.group(3) else today.year
+
+    month = MONTHS.get(month_str)
+    if not month:
+        return None
+
+    try:
+        article_date = datetime.date(year, month, day)
+    except ValueError:
+        return None
+
+    # Accept today or yesterday only
+    return article_date >= yesterday
+
+def filter_recent_items(items, today, yesterday):
+    """Remove any items that are not from today or yesterday."""
+    kept = []
+    for item in items:
+        source = item.get("source", "")
+        result = is_recent(source, today, yesterday)
+        if result is True:
+            kept.append(item)
+        elif result is None:
+            # Date unclear — include it but flag in console
+            print(f"    ⚠ Date unclear, including: {source[:60]}")
+            kept.append(item)
+        else:
+            print(f"    ✗ Rejected old article: {source[:60]}")
+    return kept
 
 def search_category(client, category, today_str, yesterday_str):
     print(f"  Searching: {category['label']}...")
 
     combined_queries = " | ".join(category['queries'])
 
-    prompt = f"""You are a senior intelligence analyst preparing a daily briefing for the Executive team at Newcastle United Football Club. Today is {today_str}.
+    prompt = f"""You are a senior intelligence analyst. Today is {today_str}.
 
 Search for news in this category: {category['label']}
 
-Search queries: {combined_queries}
+Queries: {combined_queries}
 
 {category['instruction']}
 
-STRICT DATE RULE: Only include articles published on {today_str} or {yesterday_str}. 
-Reject any article older than 48 hours. If the publication date is unclear, do not include it.
-If there are genuinely no articles from the last 48 hours in this category, return an empty array [].
-Do NOT backfill with older articles.
+CRITICAL DATE RULE: Only return articles published on {today_str} or {yesterday_str}.
+Reject any article from before {yesterday_str}. If unsure of publication date, exclude it.
+Return between 2 and 4 items. If no genuinely recent articles exist, return [].
 
-For each current item return ONLY a JSON array (no other text, no markdown):
+Return ONLY a JSON array, no other text:
 
 [
   {{
     "category": "{category['id']}",
     "badge": "News",
-    "title": "Specific, informative headline",
-    "summary": "2-3 sentences covering what happened, key facts and numbers. Written for a senior football club executive.",
-    "exec_note": "1-2 sentences on the business, legal or strategic implication for a Premier League club. General observation — do not address any specific role.",
+    "title": "Headline",
+    "summary": "2-3 sentences. Key facts and numbers for a senior football executive.",
+    "exec_note": "1-2 sentences on the business or strategic implication. General observation, no specific roles mentioned.",
     "source": "Publication name, {today_str} or {yesterday_str}",
-    "link": "https://actual-url"
+    "link": "https://url"
   }}
 ]
 
 Badge options: "News", "Official update", "Regulatory", "Financial", "Transfer", "Legal ruling", "Development", "Analysis", "Match report", "Data"
-
 Return ONLY the JSON array."""
 
     try:
@@ -157,11 +233,11 @@ Return ONLY the JSON array."""
             return items
 
     except anthropic.RateLimitError:
-        print(f"    Rate limit hit — waiting 60 seconds...")
+        print(f"    Rate limit — waiting 60 seconds...")
         time.sleep(60)
         return []
     except Exception as e:
-        print(f"    Warning: could not parse {category['label']}: {e}")
+        print(f"    Warning: {category['label']}: {e}")
 
     return []
 
@@ -196,9 +272,9 @@ def main():
     print("NUFC Executive Intelligence Briefing — Daily Automation")
     print("=" * 60)
 
-    day_label, date_label, today_str, yesterday_str = get_day_info()
-    print(f"\nGenerating briefing for: {day_label}")
-    print(f"Accepted dates: {today_str} or {yesterday_str}\n")
+    day_label, date_label, today, yesterday, today_str, yesterday_str = get_day_info()
+    print(f"\nDate: {day_label}")
+    print(f"Accepting articles from: {today_str} or {yesterday_str}\n")
 
     client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 
@@ -207,15 +283,18 @@ def main():
         if i > 0:
             print(f"    Pausing 30 seconds...")
             time.sleep(30)
-        items = search_category(client, category, today_str, yesterday_str)
-        print(f"    Found {len(items)} items for {category['label']}")
-        all_items.extend(items)
+
+        raw_items = search_category(client, category, today_str, yesterday_str)
+        # Python-side date filter — removes anything old regardless of what the model returned
+        filtered = filter_recent_items(raw_items, today, yesterday)
+        print(f"    {category['label']}: {len(raw_items)} found, {len(filtered)} passed date filter")
+        all_items.extend(filtered)
 
     if not all_items:
-        print("\nNo current items found. Preserving existing content.")
+        print("\nNo current items passed date filter. Preserving existing content.")
         return
 
-    print(f"\nTotal items: {len(all_items)}")
+    print(f"\nTotal current items: {len(all_items)}")
 
     html = load_current_html()
     current_today, current_archive = extract_current_data(html)
