@@ -1,8 +1,6 @@
 """
 NUFC Executive Intelligence Briefing — Daily Automation
 Runs every day at 9am via GitHub Actions.
-Searches credible sources for relevant news and insights for
-the Newcastle United senior leadership group.
 """
 
 import os
@@ -24,138 +22,101 @@ CATEGORIES = [
         "label": "Legal & Financial",
         "queries": [
             "football PSR profit sustainability rules financial 2026",
-            "Premier League financial fair play FFP ruling 2026",
-            "football club finance law regulation transfer spending 2026",
+            "Premier League FFP financial fair play ruling April 2026",
+            "football club finance law regulation transfer April 2026",
         ],
-        "instruction": """Find 3-5 significant items covering any of: financial regulations, legal rulings, PSR/FFP updates, transfer financial rules, tax law changes affecting football, significant club financial deals, sponsorship deals, broadcast revenue, wage bills, accounts published, arbitration outcomes, competition authority decisions.
-
-Sources: Law in Sport, Swiss Ramble, Deloitte, The Athletic, BBC Sport, Sky Sports, Reuters, The Times, The Guardian, Financial Times.
-
-TIME WINDOW: Search the last 72 hours. If genuinely limited new content, include the most significant recent item even if slightly older rather than returning empty."""
+        "instruction": "Find news published in the last 48 hours only. Topics: PSR/FFP updates, financial regulations, legal rulings, transfer financial rules, significant sponsorship or broadcast deals, club accounts, arbitration outcomes. Sources: Law in Sport, Swiss Ramble, Deloitte, The Athletic, BBC Sport, Reuters, The Times, The Guardian."
     },
     {
         "id": "infra",
         "label": "Infrastructure & Development",
         "queries": [
-            "football stadium development planning construction 2026",
-            "Premier League training ground facility investment 2026",
-            "Newcastle United St James Park stadium development 2026",
+            "football stadium development planning construction April 2026",
+            "Premier League training ground facility April 2026",
+            "Newcastle United St James Park stadium April 2026",
         ],
-        "instruction": """Find 3-5 significant items covering any of: stadium renovation or rebuild projects, training ground developments, planning applications, construction milestones, technology infrastructure at clubs, academy facility upgrades, naming rights deals, hospitality developments.
-
-Pay particular attention to any Newcastle United or North East England infrastructure news.
-
-Sources: BBC Sport, The Athletic, Sky Sports, local newspapers, club official announcements, Construction Enquirer.
-
-TIME WINDOW: Search the last 72 hours. If limited new infrastructure news, include the most recently published significant item."""
+        "instruction": "Find news published in the last 48 hours only. Topics: stadium renovation or rebuild projects, training ground developments, planning applications, construction milestones, technology investments, naming rights deals. Pay particular attention to Newcastle United infrastructure news. Sources: BBC Sport, The Athletic, Sky Sports, local newspapers, club official announcements."
     },
     {
         "id": "governing",
         "label": "Governing Bodies",
         "queries": [
-            "Premier League FA UEFA FIFA rule change decision 2026",
-            "Independent Football Regulator IFR England update 2026",
-            "football governing body disciplinary announcement 2026",
+            "Premier League FA UEFA FIFA rule decision announcement April 2026",
+            "Independent Football Regulator IFR update April 2026",
+            "football governing body disciplinary April 2026",
         ],
-        "instruction": """Find 3-5 significant items covering any of: Premier League rule changes or votes, FA disciplinary decisions, UEFA regulation updates, FIFA policy announcements, Independent Football Regulator (IFR) updates, VAR policy changes, squad registration rule changes, transfer window rules, agent regulations, player welfare policies.
-
-Sources: Premier League official, FA official, UEFA official, FIFA official, BBC Sport, Sky Sports, The Athletic, Reuters.
-
-TIME WINDOW: Search the last 72 hours. Cast the net broadly — governing body announcements are often published mid-week."""
+        "instruction": "Find news published in the last 48 hours only. Topics: Premier League rule changes or votes, FA disciplinary decisions, UEFA regulation updates, FIFA policy announcements, IFR updates, VAR policy, squad registration changes, transfer window rules, agent regulations. Sources: Premier League official, FA official, UEFA official, FIFA official, BBC Sport, Sky Sports, The Athletic."
     },
     {
         "id": "europe",
         "label": "Big 5 European Leagues",
         "queries": [
-            "La Liga Spain Real Madrid Barcelona transfer news 2026",
-            "Bundesliga Germany Bayern Munich transfer news 2026",
-            "Serie A Italy transfer news major clubs 2026",
-            "Ligue 1 France PSG transfer news 2026",
+            "La Liga Bundesliga Serie A Ligue 1 news April 10 2026",
+            "Real Madrid Barcelona Bayern Munich PSG transfer news this week",
+            "European football major news today April 2026",
         ],
-        "instruction": """Find 3-5 significant items from La Liga, Bundesliga, Serie A or Ligue 1 covering any of: major transfers, club financial developments, managerial changes, significant results, financial regulation compliance, club ownership changes, European competition results.
-
-Sources: Reuters, AFP, The Athletic, Sky Sports, BBC Sport, Marca (English), Gazzetta (English), Kicker (English).
-
-TIME WINDOW: Search the last 72 hours. European football generates daily news — there will always be relevant items."""
+        "instruction": "Find news published in the last 48 hours only. Topics: major transfers, club financial developments, managerial changes, significant match results, financial regulation compliance, European competition results. Sources: Reuters, AFP, The Athletic, Sky Sports, BBC Sport."
     },
     {
         "id": "world",
         "label": "World Football",
         "queries": [
-            "FIFA Club World Cup 2025 results standings news",
-            "Saudi Pro League transfer signing news 2026",
-            "MLS international football transfer global news 2026",
-            "World Cup 2026 preparation news update",
+            "FIFA Club World Cup news April 2026",
+            "Saudi Pro League MLS international football April 2026",
+            "World Cup 2026 news update April 2026",
         ],
-        "instruction": """Find 3-5 significant items covering any of: FIFA Club World Cup updates and results, Saudi Pro League major transfers, MLS developments, global transfer market trends, international tournament news, World Cup 2026 preparation, major club developments outside Europe.
-
-The FIFA Club World Cup is a priority — include match results, group standings, player performance news.
-
-Sources: Reuters, BBC Sport, FIFA official, The Athletic, Sky Sports, ESPN FC, AP Sport.
-
-TIME WINDOW: Search the last 72 hours."""
+        "instruction": "Find news published in the last 48 hours only. Topics: FIFA decisions, Saudi Pro League, MLS, World Cup 2026, international tournaments, global transfer trends. Sources: Reuters, BBC Sport, FIFA official, The Athletic, ESPN."
     },
     {
         "id": "premier",
         "label": "Premier League",
         "queries": [
-            "Premier League results table standings today 2026",
-            "Premier League transfer news confirmed signing 2026",
-            "Premier League manager injury club news 2026",
-            "Premier League broadcast commercial deal 2026",
+            "Premier League results standings April 10 2026",
+            "Premier League transfer news confirmed April 2026",
+            "Premier League club news manager injury April 2026",
         ],
-        "instruction": """Find 3-5 significant items from the Premier League — EXCLUDING Newcastle United (those go in the Newcastle category) — covering any of: match results and table standings, confirmed transfers, managerial appointments or sackings, injury news, club financial announcements, points deductions, broadcast deals, commercial partnerships, fan protests or ownership disputes.
-
-Sources: BBC Sport, Sky Sports, The Athletic, Premier League official, talkSPORT, The Guardian, The Times.
-
-TIME WINDOW: Search the last 72 hours. The Premier League generates multiple stories daily — always include current table context."""
+        "instruction": "Find news published in the last 48 hours only. Exclude Newcastle United stories. Topics: match results and table standings, confirmed transfers, managerial news, injuries, club financial announcements, broadcast deals. Sources: BBC Sport, Sky Sports, The Athletic, Premier League official, The Guardian, The Times."
     },
     {
         "id": "newcastle",
         "label": "Newcastle United",
         "queries": [
-            "Newcastle United NUFC news latest 2026",
-            "Newcastle United transfer signing departure rumour 2026",
-            "Newcastle United Eddie Howe team news injury 2026",
-            "NUFC PIF Saudi ownership commercial deal 2026",
+            "Newcastle United news April 10 2026",
+            "Newcastle United transfer squad news April 2026",
+            "NUFC Eddie Howe team news April 2026",
         ],
-        "instruction": """Find 3-5 significant items specifically about Newcastle United covering any of: match results and analysis, transfer news in or out, Eddie Howe press conference news, player injuries, PIF ownership news, commercial and sponsorship deals, St James' Park development, academy news, women's team news, disciplinary matters.
-
-This is the most important category — search all queries thoroughly.
-
-Sources: Chronicle Live, BBC Newcastle, Sky Sports, The Athletic, talkSPORT, Newcastle United official, The Guardian, The Times.
-
-TIME WINDOW: Search the last 72 hours. Include both confirmed news and significant credible reports from reputable journalists."""
+        "instruction": "Find news published in the last 48 hours only. Topics: match results, transfers, Eddie Howe press conference, player injuries, PIF ownership, commercial deals, St James' Park, academy, women's team. Sources: Chronicle Live, BBC Sport Newcastle, Sky Sports, The Athletic, Newcastle United official."
     },
 ]
 
 def get_day_info():
     today = datetime.date.today()
+    yesterday = today - datetime.timedelta(days=1)
     day_label = today.strftime("%A %d %B %Y")
     date_label = today.strftime("%-d %B %Y")
-    return day_label, date_label
+    today_str = today.strftime("%d %B %Y")
+    yesterday_str = yesterday.strftime("%d %B %Y")
+    return day_label, date_label, today_str, yesterday_str
 
-def search_category(client, category):
-    """Use Claude with web search to find relevant news for a category."""
+def search_category(client, category, today_str, yesterday_str):
     print(f"  Searching: {category['label']}...")
 
-    combined_queries = " | ".join(category['queries'][:3])
+    combined_queries = " | ".join(category['queries'])
 
-    prompt = f"""You are a senior intelligence analyst preparing a daily briefing for the Executive team at Newcastle United Football Club.
+    prompt = f"""You are a senior intelligence analyst preparing a daily briefing for the Executive team at Newcastle United Football Club. Today is {today_str}.
 
-Search for credible, significant news in this category: {category['label']}
+Search for news in this category: {category['label']}
 
-Run searches using these terms: {combined_queries}
+Search queries: {combined_queries}
 
 {category['instruction']}
 
-RULES:
-- Only include credible stories from reputable sources — no fabrication or clickbait
-- Do not include unverified transfer speculation unless from a highly credible source
-- Return between 2 and 5 items — do not return an empty array unless there is genuinely nothing relevant at all in the last 72 hours
-- If recent news is limited, include the most significant recent item even if a few days old
+STRICT DATE RULE: Only include articles published on {today_str} or {yesterday_str}. 
+Reject any article older than 48 hours. If the publication date is unclear, do not include it.
+If there are genuinely no articles from the last 48 hours in this category, return an empty array [].
+Do NOT backfill with older articles.
 
-For each item return ONLY a JSON array in this exact format (no other text, no markdown code fences):
+For each current item return ONLY a JSON array (no other text, no markdown):
 
 [
   {{
@@ -163,15 +124,15 @@ For each item return ONLY a JSON array in this exact format (no other text, no m
     "badge": "News",
     "title": "Specific, informative headline",
     "summary": "2-3 sentences covering what happened, key facts and numbers. Written for a senior football club executive.",
-    "exec_note": "1-2 sentences on why this matters to a Premier League club — the business, legal or strategic implication. Write as a general observation, not addressed to any specific role.",
-    "source": "Publication name, date",
+    "exec_note": "1-2 sentences on the business, legal or strategic implication for a Premier League club. General observation — do not address any specific role.",
+    "source": "Publication name, {today_str} or {yesterday_str}",
     "link": "https://actual-url"
   }}
 ]
 
 Badge options: "News", "Official update", "Regulatory", "Financial", "Transfer", "Legal ruling", "Development", "Analysis", "Match report", "Data"
 
-Return ONLY the JSON array. No preamble, no explanation, no markdown."""
+Return ONLY the JSON array."""
 
     try:
         response = client.messages.create(
@@ -196,11 +157,11 @@ Return ONLY the JSON array. No preamble, no explanation, no markdown."""
             return items
 
     except anthropic.RateLimitError:
-        print(f"    Rate limit hit for {category['label']} — waiting 60 seconds...")
+        print(f"    Rate limit hit — waiting 60 seconds...")
         time.sleep(60)
         return []
     except Exception as e:
-        print(f"    Warning: Could not parse response for {category['label']}: {e}")
+        print(f"    Warning: could not parse {category['label']}: {e}")
 
     return []
 
@@ -218,10 +179,8 @@ def extract_current_data(html):
 def build_new_html(html, new_today, new_archive):
     start = html.index(DATA_BLOCK_START)
     end   = html.index(DATA_BLOCK_END) + len(DATA_BLOCK_END)
-
     today_json   = json.dumps(new_today,   ensure_ascii=False)
     archive_json = json.dumps(new_archive, ensure_ascii=False)
-
     new_block = (
         f"{DATA_BLOCK_START} — replaced automatically on each daily update ————\n"
         f"// {'=' * 76}\n"
@@ -230,7 +189,6 @@ def build_new_html(html, new_today, new_archive):
         f"// {'=' * 76}\n"
         f"{DATA_BLOCK_END}"
     )
-
     return html[:start] + new_block + html[end:]
 
 def main():
@@ -238,26 +196,26 @@ def main():
     print("NUFC Executive Intelligence Briefing — Daily Automation")
     print("=" * 60)
 
-    day_label, date_label = get_day_info()
-    print(f"\nGenerating briefing for: {day_label}\n")
+    day_label, date_label, today_str, yesterday_str = get_day_info()
+    print(f"\nGenerating briefing for: {day_label}")
+    print(f"Accepted dates: {today_str} or {yesterday_str}\n")
 
     client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 
     all_items = []
     for i, category in enumerate(CATEGORIES):
         if i > 0:
-            print(f"    Pausing 30 seconds before next search...")
+            print(f"    Pausing 30 seconds...")
             time.sleep(30)
-
-        items = search_category(client, category)
+        items = search_category(client, category, today_str, yesterday_str)
         print(f"    Found {len(items)} items for {category['label']}")
         all_items.extend(items)
 
     if not all_items:
-        print("\nNo items found. Aborting update to preserve existing content.")
+        print("\nNo current items found. Preserving existing content.")
         return
 
-    print(f"\nTotal items found: {len(all_items)}")
+    print(f"\nTotal items: {len(all_items)}")
 
     html = load_current_html()
     current_today, current_archive = extract_current_data(html)
@@ -266,23 +224,15 @@ def main():
     if current_today and current_today.get("items"):
         new_archive = [current_today] + current_archive
         new_archive = new_archive[:14]
-        print(f"Moved {current_today['day']} to archive ({len(current_today['items'])} items)")
+        print(f"Archived: {current_today['day']} ({len(current_today['items'])} items)")
 
-    new_today = {
-        "day":   day_label,
-        "date":  date_label,
-        "items": all_items
-    }
-
+    new_today = {"day": day_label, "date": date_label, "items": all_items}
     updated_html = build_new_html(html, new_today, new_archive)
 
     with open(HTML_PATH, "w", encoding="utf-8") as f:
         f.write(updated_html)
 
-    print(f"\n✓ Briefing updated: {day_label}")
-    print(f"  Items today    : {len(all_items)}")
-    print(f"  Days in archive: {len(new_archive)}")
-    print("\nDone. GitHub Actions will commit and publish automatically.")
+    print(f"\n✓ Done: {day_label} — {len(all_items)} items, {len(new_archive)} days archived")
 
 if __name__ == "__main__":
     main()
