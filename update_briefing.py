@@ -20,65 +20,90 @@ CATEGORIES = [
     {
         "id": "legal",
         "label": "Legal & Financial",
-        "queries": [
-            "football PSR financial sustainability rules 2026",
-            "Premier League club finance law regulation 2026",
+        "searches": [
+            "Premier League PSR profit sustainability rules news site:bbc.co.uk OR site:theathletic.com OR site:theguardian.com OR site:skysports.com",
+            "football club finance transfer spending FFP financial fair play 2026",
+            "Premier League club accounts revenue sponsorship deal 2026",
+            "football legal ruling arbitration tribunal 2026",
+            "Swiss Ramble football finance analysis 2026",
         ],
-        "instruction": "Topics: PSR/FFP updates, financial regulations, legal rulings, sponsorship deals, broadcast revenue, club accounts. Sources: Law in Sport, Swiss Ramble, The Athletic, BBC Sport, Reuters, The Times, The Guardian."
+        "instruction": "Search all major UK sports and news outlets for football financial and legal news from the last 7 days. Include: PSR updates, FFP, club revenue announcements, major sponsorship deals, broadcasting rights news, legal rulings, transfer financial rules, wage data, club accounts published, arbitration outcomes. Cast the net wide — BBC Sport, Sky Sports, The Guardian, The Times, The Telegraph, The Athletic, Reuters, Financial Times, Law in Sport, Swiss Ramble are all valid."
     },
     {
         "id": "infra",
         "label": "Infrastructure & Development",
-        "queries": [
-            "football stadium training ground development 2026",
-            "Newcastle United St James Park infrastructure 2026",
+        "searches": [
+            "football stadium development planning approval 2026 site:bbc.co.uk OR site:skysports.com OR site:theguardian.com",
+            "Premier League training ground new facility construction 2026",
+            "Newcastle United stadium St James Park development plans 2026",
+            "football club naming rights deal facility upgrade 2026",
+            "Everton stadium Spurs Arsenal Liverpool Manchester City ground 2026",
         ],
-        "instruction": "Topics: stadium projects, training ground developments, planning applications, construction milestones, naming rights deals. Pay particular attention to Newcastle United infrastructure news. Sources: BBC Sport, The Athletic, Sky Sports, local newspapers, club official announcements."
+        "instruction": "Search all major news outlets and local newspapers for football infrastructure news from the last 7 days. Include: stadium builds or renovations, training ground developments, planning permission news, construction updates, naming rights deals, hospitality upgrades, technology investments at clubs, any North East England football infrastructure news. Sources: BBC Sport, Sky Sports, local newspapers (Chronicle Live, Manchester Evening News, Liverpool Echo etc), The Athletic, Construction Enquirer, StadiumDB, club official sites."
     },
     {
         "id": "governing",
         "label": "Governing Bodies",
-        "queries": [
-            "Premier League FA UEFA FIFA decision rule announcement 2026",
-            "football governing body disciplinary IFR regulator 2026",
+        "searches": [
+            "Premier League FA announcement decision rule change 2026 site:bbc.co.uk OR site:premierleague.com OR site:thefa.com",
+            "UEFA FIFA announcement decision regulation 2026",
+            "Independent Football Regulator IFR England update 2026",
+            "football VAR referee disciplinary points deduction 2026",
+            "Premier League club meeting vote agenda 2026",
         ],
-        "instruction": "Topics: Premier League rule changes, FA disciplinary decisions, UEFA/FIFA policy announcements, IFR updates, VAR policy, transfer window rules, agent regulations. Sources: PL official, FA official, UEFA official, FIFA official, BBC Sport, Sky Sports."
+        "instruction": "Search official governing body sites and major news outlets for news from the last 7 days. Include: Premier League rule changes or votes, FA cup disciplinary decisions, UEFA regulation updates, FIFA policy announcements, IFR updates and consultations, VAR policy changes, points deductions, squad registration changes, transfer window amendments, agent regulations, safeguarding policies. Sources: Premier League official, FA official, UEFA official, FIFA official, BBC Sport, Sky Sports, The Athletic, The Guardian."
     },
     {
         "id": "europe",
         "label": "Big 5 European Leagues",
-        "queries": [
-            "La Liga Bundesliga Serie A Ligue 1 news 2026",
-            "European football major transfer result news 2026",
+        "searches": [
+            "La Liga news transfer result April 2026 site:bbc.co.uk OR site:skysports.com OR site:marca.com",
+            "Bundesliga news transfer result April 2026",
+            "Serie A news transfer result April 2026",
+            "Ligue 1 news transfer result April 2026",
+            "Real Madrid Barcelona Bayern Munich PSG Inter Milan Juventus news this week",
+            "Champions League Europa League news result April 2026",
         ],
-        "instruction": "Topics: major transfers, club financial news, managerial changes, significant results, European competition. Sources: Reuters, The Athletic, Sky Sports, BBC Sport."
+        "instruction": "Search all major sports news outlets for Big 5 European league news from the last 7 days. Include: match results and league table updates, major transfer completions or negotiations, managerial appointments or sackings, significant club financial news, European competition results, fan protests, disciplinary cases. Sources: BBC Sport, Sky Sports, Reuters, AFP, The Athletic, Marca (English), Goal.com, L'Equipe (English), Kicker (English), Gazzetta dello Sport (English), ESPN."
     },
     {
         "id": "world",
         "label": "World Football",
-        "queries": [
-            "FIFA Club World Cup Saudi Pro League news 2026",
-            "World Cup 2026 international football news 2026",
+        "searches": [
+            "FIFA Club World Cup 2025 news result standings this week",
+            "Saudi Pro League transfer news Al Nassr Al Hilal Al Ittihad 2026",
+            "MLS Major League Soccer news transfer April 2026",
+            "World Cup 2026 preparation host city news April 2026",
+            "international football news global transfer April 2026",
+            "CONCACAF CONMEBOL AFC CAF football news April 2026",
         ],
-        "instruction": "Topics: FIFA Club World Cup, Saudi Pro League, MLS, World Cup 2026 preparations, global football news. Sources: Reuters, BBC Sport, FIFA official, The Athletic, ESPN."
+        "instruction": "Search major global sports outlets for world football news from the last 7 days. Include: FIFA Club World Cup results and standings (this is currently ongoing — prioritise), Saudi Pro League transfers and results, MLS news, World Cup 2026 host preparations, AFC/CAF/CONCACAF news, major global transfers, FIFA disciplinary cases, international break results. Sources: Reuters, BBC Sport, FIFA official, The Athletic, Sky Sports, ESPN, AP Sport, Al Jazeera Sport, Goal.com."
     },
     {
         "id": "premier",
         "label": "Premier League",
-        "queries": [
-            "Premier League results standings news 2026",
-            "Premier League transfer injury manager club news 2026",
+        "searches": [
+            "Premier League results table standings April 2026 site:bbc.co.uk OR site:skysports.com",
+            "Premier League transfer news signing confirmed April 2026",
+            "Premier League manager sacked appointed news April 2026",
+            "Premier League injury team news April 2026",
+            "Arsenal Chelsea Manchester City Liverpool Manchester United news April 2026",
+            "Premier League relegation title race news April 2026",
         ],
-        "instruction": "Topics: match results, table standings, confirmed transfers, managerial news, injuries, club announcements. Exclude Newcastle United stories. Sources: BBC Sport, Sky Sports, The Athletic, The Guardian, The Times."
+        "instruction": "Search all major UK sports outlets for Premier League news from the last 7 days. EXCLUDE Newcastle United stories (they go in the Newcastle category). Include: match results and full table standings, transfer confirmed or rumoured from credible journalists, managerial changes, player injury updates, title race and relegation battle updates, VAR controversies, club boardroom news, fan protests, commercial deals. Sources: BBC Sport, Sky Sports, The Athletic, The Guardian, The Times, The Telegraph, Mirror Sport, The Sun Sport, talkSPORT, Premier League official."
     },
     {
         "id": "newcastle",
         "label": "Newcastle United",
-        "queries": [
-            "Newcastle United NUFC news 2026",
-            "Newcastle United transfer team news Eddie Howe 2026",
+        "searches": [
+            "Newcastle United news April 2026 site:chroniclelive.co.uk OR site:bbc.co.uk OR site:skysports.com",
+            "Newcastle United NUFC transfer news April 2026",
+            "Eddie Howe press conference team news injury April 2026",
+            "Newcastle United PIF Saudi Arabia ownership news 2026",
+            "Newcastle United match result performance April 2026",
+            "Newcastle United commercial deal sponsor academy women 2026",
         ],
-        "instruction": "Topics: match results, transfers, Eddie Howe press conference, player injuries, PIF ownership, commercial deals, St James Park, academy, women's team. Sources: Chronicle Live, BBC Sport, Sky Sports, The Athletic, NUFC official."
+        "instruction": "Search all major UK sports outlets and Newcastle-specific sources for NUFC news from the last 7 days. This is the most important category — be thorough. Include: match results and analysis, transfer ins and outs (confirmed and credible rumours), Eddie Howe quotes and team news, player fitness and injury updates, PIF ownership developments, commercial partnerships, St James' Park development, academy signings and results, women's team news, supporter trust news, any club disciplinary matters. Sources: Chronicle Live, ChronicleLive.co.uk, BBC Sport Newcastle, Sky Sports, The Athletic, talkSPORT, The Guardian, The Times, NUFC official site, NUFC The Mag, Shearer's NUFC blog."
     },
 ]
 
@@ -99,51 +124,37 @@ def get_day_info():
     return day_label, date_label, today, cutoff, today_str, cutoff_str
 
 def parse_date_from_source(source_str, current_year):
-    """
-    Try to extract a datetime.date from a source string.
-    Returns a date object if successful, None otherwise.
-    """
     s = source_str.lower()
-
-    # Relative: today/yesterday
     today = datetime.date.today()
-    if "today" in s or "just now" in s or "breaking" in s:
+
+    if re.search(r"\b(today|just now|breaking)\b", s):
         return today
     if "yesterday" in s:
         return today - datetime.timedelta(days=1)
 
-    # Relative: N days ago
     m = re.search(r"(\d+)\s+days?\s+ago", s)
     if m:
         return today - datetime.timedelta(days=int(m.group(1)))
 
-    # Relative: N hours/minutes ago
     if re.search(r"\d+\s+(hours?|minutes?)\s+ago", s):
         return today
 
-    # Relative: 1 week ago
     if re.search(r"1\s+week\s+ago", s):
         return today - datetime.timedelta(days=7)
 
-    # Relative: N weeks ago — treat as too old
     m = re.search(r"(\d+)\s+weeks?\s+ago", s)
     if m:
         return today - datetime.timedelta(weeks=int(m.group(1)))
 
-    # Relative: months/years ago — too old
     if re.search(r"\d+\s+(months?|years?)\s+ago", s):
         return today - datetime.timedelta(days=365)
     if re.search(r"(last\s+month|last\s+year|months?\s+ago|years?\s+ago)", s):
         return today - datetime.timedelta(days=365)
 
-    # Absolute: try "Month Day Year" or "Day Month Year"
-    # e.g. "April 10, 2026" or "10 April 2026" or "April 10" or "10 April"
     patterns = [
-        # Month Day Year
         r"(january|february|march|april|may|june|july|august|september|october|november|december"
         r"|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)"
         r"\s+(\d{1,2})(?:[,\s]+(\d{4}))?",
-        # Day Month Year
         r"(\d{1,2})\s+"
         r"(january|february|march|april|may|june|july|august|september|october|november|december"
         r"|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)"
@@ -168,36 +179,36 @@ def parse_date_from_source(source_str, current_year):
             except ValueError:
                 continue
 
-    return None  # Could not determine date
+    return None
 
 def is_acceptable(source_str, today, cutoff):
-    """
-    Returns True = keep, False = reject, None = uncertain.
-    Uses fully dynamic date comparison — no hardcoded month names.
-    """
     s = source_str.lower()
 
-    # Hard reject any year before 2026
+    # Hard reject any pre-2026 year
     if re.search(r"\b(2025|2024|2023|2022|2021|2020|2019|2018)\b", s):
         return False
 
-    # Try to parse a date
     article_date = parse_date_from_source(source_str, today.year)
 
     if article_date is None:
-        # Cannot determine date — allow through with warning
-        return None
+        return None  # Uncertain — keep with warning
 
     if article_date > today:
-        # Future date — parsing error, allow through
-        return None
+        return None  # Parsing error — keep with warning
 
-    # Accept if within the 7-day window
     return article_date >= cutoff
 
 def filter_items(items, today, cutoff):
     kept = []
+    seen_titles = set()
     for item in items:
+        # Deduplicate by title
+        title = item.get("title", "").lower().strip()
+        if title in seen_titles:
+            print(f"    ✗ Duplicate removed: {title[:60]}")
+            continue
+        seen_titles.add(title)
+
         source = item.get("source", "")
         result = is_acceptable(source, today, cutoff)
         if result is True:
@@ -212,32 +223,37 @@ def filter_items(items, today, cutoff):
 def search_category(client, category, today_str, cutoff_str):
     print(f"  Searching: {category['label']}...")
 
-    combined_queries = " | ".join(category['queries'])
+    # Build search context from multiple queries
+    search_context = "\n".join([f"- {q}" for q in category['searches']])
 
     prompt = f"""You are a senior intelligence analyst. Today is {today_str}.
 
-Search for news in this category: {category['label']}
+Your task: Find the most significant and relevant news for this briefing category: {category['label']}
 
-Search queries: {combined_queries}
+ACTIVELY SEARCH the web using ALL of these search queries — do not rely on memory:
+{search_context}
 
 {category['instruction']}
 
-DATE RULE: Only return articles published between {cutoff_str} and {today_str}.
-Do not include anything from 2025 or earlier.
-Do not include anything more than 7 days old.
-If genuinely no relevant news exists in the last 7 days, return [].
+STRICT RULES:
+- Only include articles published between {cutoff_str} and {today_str} (last 7 days)
+- Do not include anything from 2025 or earlier
+- Only include credible, factual reporting — no fabrication, no clickbait
+- Unverified transfer rumours only from Tier 1 journalists (Fabrizio Romano, David Ornstein, The Athletic)
+- There IS always football news in every category every week — search broadly and thoroughly
+- Return 3-5 items
 
-Return 2-4 items as a JSON array only (no other text, no markdown):
+Return ONLY a JSON array (no other text, no markdown code fences):
 
 [
   {{
     "category": "{category['id']}",
     "badge": "News",
-    "title": "Specific headline",
+    "title": "Specific informative headline",
     "summary": "2-3 sentences. Key facts and numbers for a senior football executive.",
     "exec_note": "1-2 sentences on the business or strategic implication. General observation, no specific roles mentioned.",
-    "source": "Publication name, exact date",
-    "link": "https://url"
+    "source": "Publication name, exact date e.g. BBC Sport, 10 April 2026",
+    "link": "https://actual-url"
   }}
 ]
 
@@ -248,7 +264,7 @@ Return ONLY the JSON array."""
     try:
         response = client.messages.create(
             model="claude-sonnet-4-20250514",
-            max_tokens=3000,
+            max_tokens=4000,
             tools=[{"type": "web_search_20250305", "name": "web_search"}],
             messages=[{"role": "user", "content": prompt}]
         )
@@ -308,8 +324,8 @@ def main():
     print("=" * 60)
 
     day_label, date_label, today, cutoff, today_str, cutoff_str = get_day_info()
-    print(f"\nDate      : {day_label}")
-    print(f"Cutoff    : {cutoff_str} (7-day window, fully dynamic)")
+    print(f"\nDate   : {day_label}")
+    print(f"Cutoff : {cutoff_str} (7-day rolling window)")
     print()
 
     client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
@@ -322,13 +338,13 @@ def main():
 
         raw = search_category(client, category, today_str, cutoff_str)
         filtered = filter_items(raw, today, cutoff)
-        print(f"    {category['label']}: {len(raw)} returned → {len(filtered)} kept")
+        print(f"    {category['label']}: {len(raw)} found → {len(filtered)} kept")
         all_items.extend(filtered)
 
-    print(f"\nTotal items after filtering: {len(all_items)}")
+    print(f"\nTotal items: {len(all_items)}")
 
     if not all_items:
-        print("No items passed date filter. Preserving existing content.")
+        print("No items found. Preserving existing content.")
         return
 
     html = load_current_html()
